@@ -1,0 +1,21 @@
+(define (encode message tree)
+  (if (null? message)
+    '()
+    (append (encode-symbol (car message) tree)
+            (encode (cdr message) tree))))
+
+(define (encode-symbol symbol tree)
+  (cond ((and (leaf? tree) (eq? (symbol-leaf tree) symbol)) '())
+        ((contains? (symbols (left-branch tree)) symbol)
+         (cons 0 (encode-symbol symbol (left-branch tree))))
+        ((contains? (symbols (right-branch tree)) symbol)
+         (cons 1 (encode-symbol symbol (right-branch tree))))
+        (else (error "ENCODE-SYMBOL, tree does not include " symbol))))
+
+(define (contains? list x)
+  (cond ((null? list) #f)
+        ((eq? (car list) x) #t)
+        (else (contains? (cdr list) x))))
+
+(define sample-raw (list 'A 'D 'A 'B 'B 'C 'A))
+(encode sample-raw sample-tree)

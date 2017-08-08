@@ -1,0 +1,17 @@
+; (define (tan-cf x k)
+;   (define (n i) (+ 1 (* 2 (- i 1))))
+;   (define (iter i result)
+;     (newline) (display result)
+;     (if (= i 0)
+;       (/ x result)
+;       (iter (- i 1) (- (n i) (/ (square x) result)))))
+;   (iter k 1))
+(define (tan-cf x k)
+  (define (n i) (+ 1 (* 2 (- i 1))))
+  (define (iter i)
+    (if (> i k)
+      0
+      (- (n i) (/ (* x x) (iter (+ i 1))))))
+  (/ x (iter 1)))
+
+(tan-cf 1.0 100)

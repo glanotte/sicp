@@ -1,0 +1,15 @@
+(define (generated-hufffman-tree pairs)
+    (successive-merge (make-leaf-set pairs)))
+
+(define (successive-merge leaf-set)
+  (cond ((null? leaf-set) '())
+        ((null? (cdr leaf-set)) (car leaf-set))
+        (else (successive-merge
+                 (adjoin-set (make-code-tree (car leaf-set)
+                                             (cadr leaf-set))
+                             (cddr leaf-set))))))
+(define get-a-job-code '((Na 1) (Yip 9) (Sha 3) (Job 2) (Get 2) (A 2) (Boom 1) (Wah 1)))
+(define get-a-job-tree (generated-hufffman-tree get-a-job-code))
+(define get-a-job `(Get A Job Sha Na Na Na Na Na Na Na Get A Job Sha Na Na Na Na Na Na Na Wah Yip Yip Yip Yip Yip Yip Yip Yip Sha Boom))
+(define encoded (encode get-a-job get-a-job-tree))
+(define decoded (decode encoded get-a-job-tree)

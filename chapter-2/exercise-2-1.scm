@@ -1,0 +1,16 @@
+(define (print-rat x)
+  (display (numer x))
+  (display "/")
+  (display (denom x)))
+
+(define (make-rat n d)
+  (let ((g (abs (gcd n d)))
+        (den (abs d))
+        (num (if (or (and (< n 0) (> d 0)) (and (> n 0) (< d 0)))
+               (- (abs n))
+               (abs n))))
+    (cons (/ num g)
+          (/ den g))))
+
+(print-rat (make-rat -1 -4))
+(print-rat (make-rat -1 2))

@@ -1,0 +1,13 @@
+(define (element-of-set? x set)
+  (cond ((null? set) false)
+        ((= x (entry set)) true)
+        ((< x (entry set))
+         (element-of-set? x (left-branch set)))
+        ((> x (entry set))
+         (element-of-set? x (right-branch set)))))
+
+(define (lookup given-key tree-of-records)
+  (cond ((null? tree-of-records) false)
+        ((= given-key (key (entry tree-of-records))) (entry tree-of-records))
+        ((< given-key (key (entry tree-of-records))) (lookup given-key (left-branch tree-of-records)))
+        ((> given-key (key (entry tree-of-records))) (lookup given-key (right-branch tree-of-records)))))

@@ -1,0 +1,43 @@
+(define (make-deque) (cons '() '()))
+(define (empty-deque? queue)
+  (null? (car queue)))
+(define (front-deque queue) car queue)
+(define (rear-deque queue) cdr queue)
+(define (front-insert-deque! queue item)
+  (let ((new-pair (list item '() '())))
+    (cond ((empty-deque? queue)
+           (set-car! queue new-pair)
+           (set-cdr! queue new-pair)
+           queue)
+          (else
+           (set-cdr! (cdr new-pair) (front-deque queue))
+           (set-car! (cdr (front-deque queue)) new-pair)
+           (set-car! queue new-pair)
+            queue))))
+(define (rear-insert-deque! queue item)
+  (let ((new-pair (list item '() '())))
+    (cond ((empty-deque? queue)
+           (set-car! queue new-pair)
+           (set-cdr! queue new-pair)
+           queue)
+          (else
+           (set-car! (cdr new-pair) (rear-deque queue))
+           (set-cdr! (cdr (rear-deque queue)) new-pair)
+           (set-cdr! (rear-deque queue) new-pair)
+           queue))))
+
+(define (front-delete-deque! queue)
+  (set-car! queue (cdr (car queue)))
+  queue)
+;; (define (rear-delete-deque! queue))
+
+(define (assert label expr)
+  (display label)
+  (if expr
+    (display " passed")
+    (display " failed"))
+  (newline))
+
+(define deq (make-deque))
+(assert "empty" (empty-deque? deq))
+

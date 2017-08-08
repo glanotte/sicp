@@ -1,0 +1,47 @@
+(define (square x) (* x x))
+(define (monte-carlo trials experiment)
+  (define (iter trials-remaining trials-passed)
+    (display "passed: ")
+    (display trials-passed)
+    (newline)
+    (cond ((= trials-remaining 0)
+           (/ trials-passed trials))
+          ((experiment)
+           (iter (- trials-remaining 1)
+                 (+ trials-passed 1)))
+          (else
+            (iter (- trials-remaining 1)
+                  trials-passed))))
+  (iter trials 0))
+
+(define (random-in-range low high)
+  (let ((range (- high low)))
+    (+ low (random (inexact->exact range)))))
+
+(define (in-circle? x1 x2 y1 y2 px py)
+  (let ((cx (/ (+ x1 x2) 2))
+        (cy (/ (+ y1 y2) 2)))
+    (let ((radius (abs (- x2 cx))))
+      (<= (+ (square (- px cx)) (square (- py cy)))
+          (square radius)))))
+
+(define (estimate-integral P x1 x2 y1 y2 trials)
+  (define (experiment)
+    (P x1 x2 y1 y2
+       (random-in-range x1 x2)
+       (random-in-range y1 y2)))
+  (exact->inexact (monte-carlo trials experiment)))
+
+(define (get-area x1 x2 y1 y2)
+  (* (- x2 x1)
+     (- y2 y1)
+     (estimate-integral in-circle? x1 x2 y1 y2 1000000)))
+
+(define (estimate-pi x1 x2 y1 y2)
+  (let ((cx (/ (+ x1 x2) 2))
+        (cy (/ (+ y1 y2) 2)))
+    (let ((radius (abs (- x2 cx))))
+      (/ (get-area x1 x2 y1 y2)
+         (square radius)))))
+
+(estimate-pi 2.0 8.0 400.0 1000.0)
