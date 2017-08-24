@@ -1,6 +1,5 @@
-(define random-init (random 1000000))
-(define (rand-update n)
-  (random 1000000))
+(define random-init (random 1))
+(define (rand-update n) (+ n 1))
 (define rand (let ((x random-init))
                (lambda ()
                  (set! x (rand-update x))

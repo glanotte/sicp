@@ -17,7 +17,7 @@
   (if (= n 0)
     (stream-car s)
     (stream-ref (stream-cdr s) (- n 1))))
-(define (stream-map proc s)
+(define (my-stream-map proc s)
   (if (stream-null? s)
     the-empty-stream
     (cons-stream (proc (stream-car s))

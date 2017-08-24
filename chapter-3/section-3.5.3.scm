@@ -36,6 +36,7 @@
 
 (define (accelerated-sequence transform s)
   (my-stream-map stream-car (make-tableau transform s)))
+
 ; (display-stream
 ;   (accelerated-sequence euler-transform pi-stream))
 
@@ -57,3 +58,9 @@
     (lambda (pair) (prime? (+ (car pair) (cadr pair))))
     int-pairs))
 
+(define (integral integrand initial-value dt)
+  (define int
+    (cons-stream initial-value
+                 (add-streams (scale-stream integrand dt)
+                              int)))
+  int)
