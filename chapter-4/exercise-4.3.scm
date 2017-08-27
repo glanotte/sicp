@@ -1,0 +1,23 @@
+(define syntax-table (make-table))
+(define (get op) ((syntax-table 'lookup) op))
+(define (put op proc) ((syntax-table 'insert!) op proc))
+
+(put 'quote (lambda (x y) (text-of-quotation x)))
+(put 'set! eval-assignment)
+(put 'define eval-definition)
+(put 'lambda (lambda (x y) (make-procedure (lambda-parameters x)
+                                           (lambda-body x)
+                                           y)))
+(put 'if eval-if)
+(put 'begin (lambda (x y) (eval-sequence (begin-actions x) y)))
+(put 'cond (lambda (x y) (eval (cond->if x) y)))
+
+(define (eval expr env)
+  (cond ((self-evaluating? expr) expr)
+        ((variable? expr) (lookup-variable-value expr env))
+        ((get (car expr)) ((get (car expr)) expr env))
+        ((application? expr)
+         (apply (eval (operator expr) env)
+                (list-of-values (operands expr) env)))
+        (else
+          (error "Unknown expression type: EVAL" exp))))
