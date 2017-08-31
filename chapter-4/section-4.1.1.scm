@@ -1,3 +1,5 @@
+;;; 4.1.1
+
 (define (eval expr env)
   (cond ((self-evaluating? expr) expr)
         ((variable? expr) (lookup-variable-value expr env))
@@ -11,6 +13,8 @@
         ((begin? expr) (eval-sequence (begin-actions expr) env))
         ((cond? expr) (eval (cond->if expr) env))
         ((application? expr)
+        (display "expr ") (display expr)(newline)
+        (display "operator ") (display operator)(newline)
          (apply (eval (operator expr) env)
                 (list-of-values (operands expr) env)))
         (else
@@ -18,7 +22,7 @@
 (define (apply procedure arguments)
   (cond ((primitive-procedure? procedure)
          (apply-primitive-procedure procedure arguments))
-        ((compount-procedure? procedure)
+        ((compound-procedure? procedure)
          (eval-sequence
            (procedure-body procedure)
            (extend-environment
@@ -48,7 +52,7 @@
                        env)
   'ok)
 (define (eval-definition expr env)
-  (defin-variable! (definition-variable expr)
+  (define-variable! (definition-variable expr)
                     (eval (definition-value expr) env)
                     env)
   'ok)
