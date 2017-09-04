@@ -2,18 +2,21 @@
   (cond ((self-evaluating? expr) expr)
         ((variable? expr) (lookup-variable-value expr env))
         ((quoted? expr) (text-of-quotation expr))
+        ((let? expr) (eval-let expr env))
+        ((letrec? expr) (eval-letrec expr env))
         ((assignment? expr) (eval-assignment expr env))
         ((definition? expr) (eval-definition expr env))
         ((if? expr) (eval-if expr env))
-        ((lambda? expr) (make-procedure (lambda-parameters expr)
-                                        (lambda-body expr)
-                                        env))
-        ((begin? expr) (eval-sequence (begin-actions expr) env))
+        ((lambda? expr)
+         (make-procedure (lambda-parameters expr)
+                         (lambda-body expr)
+                         env))
+        ((begin? expr)
+         (eval-sequence (begin-actions expr) env))
         ((cond? expr) (eval (cond->if expr) env))
-        ((let? expr) (eval (let->combination expr) env))
         ((application? expr)
          (my-apply (eval (operator expr) env)
-                (list-of-values (operands expr) env)))
+                   (list-of-values (operands expr) env)))
         (else
           (error "Unknown expression type: EVAL" exp))))
 
@@ -138,13 +141,56 @@
         (make-if (cond-predicate first)
                  (sequence->exp (cond-actions first))
                  (expand-clauses rest))))))
+;;; Ex 4.16 (scan-out-defines)
+(define (my-filter predicate sequence)
+  (cond ((null? sequence) nil)
+        ((predicate (car sequence))
+         (cons (car sequence)
+               (my-filter predicate (cdr sequence))))
+        (else (my-filter predicate (cdr sequence)))))
+(define (my-remove predicate sequence)
+  (cond ((null? sequence) nil)
+        ((not (predicate (car sequence)))
+         (cons (car sequence)
+               (my-remove predicate (cdr sequence))))
+        (else (my-remove predicate (cdr sequence)))))
 
+;(define (f n) (define (g x) (+ 1 x)) (define (h y) (+ 2 y)) (+ (g n) (h n)))
+; (define (fn n) (define g 1) (+ g 3))
+
+(define (make-let bindings body)
+  (cons 'let (cons bindings body)))
+
+(define (scan-out-defines proc-body)
+  (let ((definitions (my-filter definition? proc-body))
+        (rest-body (my-remove definition? proc-body)))
+    (if (null? definitions)
+      proc-body ;;nothing to do
+      (let ((vars (map definition-variable definitions)))
+        (let ((bindings (map (lambda (var) (list var 0)) vars))
+              (assigns (map (lambda (def) (list 'set!
+                                                (definition-variable def)
+                                                (definition-value def)))
+                            definitions)))
+          (list (make-let bindings (append assigns rest-body))))))))
 ;;; 4.1.3
 
 (define (true? x) (not (eq? x false)))
 (define (false? x) (eq? x false))
+(define (contain-defines exps)
+   (if (null? exps)
+     false
+     (or (if (definition? (car exps))
+           true
+           false)
+         (contain-defines (cdr exps)))))
 (define (make-procedure parameters body env)
-  (list 'procedure parameters body env))
+  (display "procedure parms: ")(display parameters)(newline)
+  (display "procedure body ")(display body)(newline)
+  (if (contain-defines body)
+    (list 'procedure parameters (scan-out-defines body) env)
+    (list 'procedure parameters body env)))
+
 (define (compound-procedure? p)
   (tagged-list? p 'procedure))
 (define (procedure-parameters p) (cadr p))
@@ -174,6 +220,8 @@
     (define (scan vars vals)
       (cond ((null? vars)
              (env-loop (enclosing-environment env)))
+            ((and (eq? var (car vars)) (eq? (car vals) '*unassigned*))
+             (error "Variable is unassigned" var))
             ((eq? var (car vars)) (car vals))
             (else (scan (cdr vars) (cdr vals)))))
     (if (eq? env the-empty-environment)
@@ -194,7 +242,7 @@
       (error "unbound variable: SET!" var)
       (let ((frame (first-frame env)))
         (scan (frame-variables frame)
-              (frame values frame)))))
+              (frame-values frame)))))
   (env-loop env))
 
 (define (define-variable! var val env)
@@ -207,14 +255,18 @@
     (scan (frame-variables frame) (frame-values frame))))
 ;;; Exercise 4.6 - let
 
-(define (let? expr) (tagged-list? expr 'let))
-(define (let-variables expr) (map car (cadr expr)))
-(define (let-values expr) (map cadr (cadr expr)))
-(define (let-body expr) (cddr expr))
-(define (let->combination expr)
-  (cons (make-lambda (let-variables expr)
-                     (let-body expr))
-        (let-values expr)))
+; (define (let? expr) (tagged-list? expr 'let))
+(define (eval-let exp env)
+  (display "eval let: ")(display (eval (let->combination exp) env)) (newline)
+  (eval (let->combination exp) env))
+ (define (let? expr) (tagged-list? expr 'let))
+ (define (let-vars expr) (map car (cadr expr)))
+ (define (let-inits expr) (map cadr (cadr expr)))
+ (define (let-body expr) (cddr expr))
+
+ (define (let->combination expr)
+   (cons (make-lambda (let-vars expr) (let-body expr))
+         (let-inits expr)))
 
 ;;; 4.1.4
 
@@ -233,6 +285,10 @@
   (list (list 'car car)
         (list 'cdr cdr)
         (list 'cons cons)
+        (list '+ +)
+        (list '- -)
+        (list '= =)
+        (list '* *)
         (list 'null? null?)))
 (define (primitive-procedure-names)
   (map car primitive-procedures))
@@ -264,6 +320,24 @@
                    '<procedure-env>))
     (display object)))
 
+;; exercise 4.20 - letrec
 
+; (letrec
+;   ((fact (lambda (n)
+;            (if (= n 1)
+;              1
+;              (* n (fact (- n 1)))))))
+;   (fact 10))
+
+(define (letrec? expr) (tagged-list? expr 'letrec))
+(define (eval-letrec expr env) (eval (letrec->let expr) env))
+(define (letrec->let expr)
+  (let ((vars (map (lambda (var) (list var 0))
+                   (let-vars expr)))
+        (set-vars (map (lambda (init) (cons 'set! init))
+                       (cadr expr)))
+        (body (let-body expr)))
+    (make-let vars (append set-vars body))))
 
 (define the-global-environment (setup-environment))
+(driver-loop)
