@@ -5,6 +5,7 @@
         ((assignment? expr) (eval-assignment expr env))
         ((definition? expr) (eval-definition expr env))
         ((if? expr) (eval-if expr env))
+        ((unless? expr) (eval (unless->if expr) env))
         ((lambda? expr) (make-procedure (lambda-parameters expr)
                                         (lambda-body expr)
                                         env))
@@ -194,7 +195,7 @@
       (error "unbound variable: SET!" var)
       (let ((frame (first-frame env)))
         (scan (frame-variables frame)
-              (frame-values frame)))))
+              (frame values frame)))))
   (env-loop env))
 
 (define (define-variable! var val env)
@@ -233,7 +234,12 @@
   (list (list 'car car)
         (list 'cdr cdr)
         (list 'cons cons)
-        (list 'null? null?)))
+        (list 'null? null?)
+        (list '= =)
+        (list '- -)
+        (list '* *)
+        (list '+ +)
+        ))
 (define (primitive-procedure-names)
   (map car primitive-procedures))
 (define (primitive-procedure-objects)
@@ -264,6 +270,20 @@
                    '<procedure-env>))
     (display object)))
 
+;;; Actually implement unless
+
+(define (unless? exp) (tagged-list? exp 'unless))
+(define (unless-predicate expr) (cadr expr))
+(define (unless-consequent expr) (caddr expr))
+(define (unless-alternative expr)
+  (if (not (null? (cdddr expr)))
+    (cadddr expr)
+    'false))
+
+(define (unless->if exp)
+  (make-if (unless-predicate exp)
+           (unless-alternative exp)
+           (unless-consequent exp)))
 
 
 (define the-global-environment (setup-environment))
