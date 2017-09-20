@@ -1,0 +1,15 @@
+(son Adam Cain)
+(son Cain Enoch)
+(son Irad Mehujael)
+(son Mehujael Lamech)
+(wife Lamech Ada)
+(son Ada Jabal)
+(son Ada Jubal)
+
+(rule (grandson ?S ?G)
+      (and (son ?F ?S)
+           (son ?G ?F)))
+
+(rule (son ?M ?S)
+      (and (son ?W ?S)
+           (wife ?M ?W)))
