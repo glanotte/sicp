@@ -19,7 +19,7 @@
   (let ((qval (text-of-quotation exp)))
     (lambda (env) qval)))
 
-(define (analzye-variable exp)
+(define (analyze-variable exp)
   (lambda (env) (lookup-variable-value exp env)))
 
 (define (analyze-assignment exp)
