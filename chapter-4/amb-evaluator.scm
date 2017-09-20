@@ -388,6 +388,7 @@
         (list 'cons cons)
         (list 'not not)
         (list 'eq? eq?)
+        (list 'even? even?)
         (list '+ +)
         (list '- -)
         (list '* *)
